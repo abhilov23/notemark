@@ -1,15 +1,15 @@
 /* eslint-disable prettier/prettier */
 
+import { RootLayout, Sidebar, Content } from "./components"
+
+
+
 function App(): React.JSX.Element {
   return (
-    <div 
-      className="h-screen w-screen flex items-center justify-center" 
-      style={{ background: 'transparent' }}
-    >
-      <span className="text-4xl text-blue-500"> 
-        Hello from Abhilov
-      </span>
-    </div>
+    <RootLayout> 
+      <Sidebar className="p-2 border-4 border-red-300">Sidebar</Sidebar>
+      <Content className="border-4 border-blue-500">Content</Content>
+    </RootLayout>
   )
 }
 

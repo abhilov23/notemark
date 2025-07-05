@@ -1,17 +1,31 @@
 @import "tailwindcss";
 
 @layer base {
-    #root {
-        @apply h-full;
-    }
-
     html,
-    body {
-        @apply h-full;
-        @apply select-none;
-        @apply bg-black/10; /* Same as rgba(0, 0, 0, 0.1) */
-        @apply font-mono antialiased text-white;
-        @apply overflow-hidden;
-        @apply flex items-center justify-center;
+    body,
+    #root {
+        background: transparent !important;
+        height: 100vh;
+        width: 100vw;
+        font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+        color: white;
+        overflow: hidden;
+        margin: 0;
+        padding: 0;
+    }
+}
+
+/* Apply to all divs by default */
+@layer base {
+    div {
+        background: rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+    }
+    
+    /* Override for specific cases */
+    .bg-transparent {
+        background: transparent !important;
+        backdrop-filter: none !important;
     }
 }
