@@ -28,3 +28,11 @@
         -webkit-backdrop-filter: none !important;
     }
 }
+
+header{
+    -webkit-app-region: drag;
+}
+
+button{
+    -webkit-app-region: no-drag;
+}
