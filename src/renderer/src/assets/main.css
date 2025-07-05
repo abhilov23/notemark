@@ -16,17 +16,18 @@
 }
 
 @layer base {
-    div {
-        background: rgba(0, 0, 0, 0.01);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-    }
-    
     .bg-transparent {
         background: transparent !important;
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
     }
+
+    .glass {
+    background: rgba(24, 24, 27, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
 }
 
 header{
