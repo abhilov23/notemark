@@ -1,17 +1,17 @@
 @import "tailwindcss";
 
 @layer base {
-    #root{
-     @apply h-full;
+    #root {
+        @apply h-full;
     }
 
     html,
     body {
         @apply h-full;
-
         @apply select-none;
-        @apply bg-transparent;
+        @apply bg-black/10; /* Same as rgba(0, 0, 0, 0.1) */
         @apply font-mono antialiased text-white;
         @apply overflow-hidden;
+        @apply flex items-center justify-center;
     }
 }
