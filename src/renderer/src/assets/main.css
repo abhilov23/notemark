@@ -15,17 +15,16 @@
     }
 }
 
-/* Apply to all divs by default */
 @layer base {
     div {
-        background: rgba(0, 0, 0, 0.1);
-        backdrop-filter: blur(5px);
-        -webkit-backdrop-filter: blur(5px);
+        background: rgba(0, 0, 0, 0.01);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
     }
     
-    /* Override for specific cases */
     .bg-transparent {
         background: transparent !important;
         backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
     }
 }
