@@ -1,9 +1,7 @@
 @import "tailwindcss";
 
 @layer base {
-    html,
-    body,
-    #root {
+    html, body, #root {
         background: transparent !important;
         height: 100vh;
         width: 100vw;
@@ -16,24 +14,19 @@
 }
 
 @layer base {
-    .bg-transparent {
-        background: transparent !important;
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
-    }
-
     .glass {
-    background: rgba(24, 24, 27, 0.5);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-  }
-
+        background: rgba(24, 24, 27, 0.25);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.125);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
 }
 
-header{
+header {
     -webkit-app-region: drag;
 }
 
-button{
+button {
     -webkit-app-region: no-drag;
 }
