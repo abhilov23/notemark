@@ -10,10 +10,10 @@ function App(): React.JSX.Element {
     <>
     <DraggableTopBar/>
     <RootLayout> 
-      <Sidebar className="glass p-2">
+      <Sidebar className="glass p-2 backdrop-blur-3xl">
       <ActionButtonRow className="flex justify-between mt-1"/>
       </Sidebar>
-      <Content className="border-l bg-zinc-950/50 border-l-white/10">Content</Content>
+      <Content className="glass border-l backdrop-blur-3xl border-l-white/20">Content</Content>
     </RootLayout>
     </>
   )

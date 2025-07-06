@@ -3,7 +3,7 @@
 
 export const DraggableTopBar = () => {
   return (
-   <header className="absolute inset-0 h-8 bg-transparent border-2"/>  
+   <header className="absolute inset-0 h-8 glass border-2"/>  
 )
 }
 

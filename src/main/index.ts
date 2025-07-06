@@ -6,6 +6,7 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 
 function createWindow(): void {
+ 
   const mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
@@ -16,7 +17,6 @@ function createWindow(): void {
     frame: false,
     transparent: true,
     backgroundColor: '#00000000',
-    backgroundMaterial: 'acrylic',
     titleBarStyle: 'hidden',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
