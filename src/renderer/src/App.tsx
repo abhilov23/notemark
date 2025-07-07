@@ -2,6 +2,7 @@
 
 import { RootLayout, Sidebar, Content, DraggableTopBar, NotePreviewList,  } from "./components"
 import ActionButtonRow from "./components/ActionButtonRow"
+import FloatingNoteTitle from "./components/FloatingNoteTitle"
 import MarkdownEditor from "./components/MarkdownEditor"
 
 
@@ -16,6 +17,7 @@ function App(): React.JSX.Element {
       <NotePreviewList className="mt-3 space-y-1"/>
       </Sidebar>
       <Content className="glass bg-black/90 border-l backdrop-blur-3xl border-l-white/20">
+      <FloatingNoteTitle className="pt-2"/>
       <MarkdownEditor/>
       </Content>
     </RootLayout>
