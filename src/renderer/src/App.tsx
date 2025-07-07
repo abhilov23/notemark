@@ -2,6 +2,7 @@
 
 import { RootLayout, Sidebar, Content, DraggableTopBar, NotePreviewList,  } from "./components"
 import ActionButtonRow from "./components/ActionButtonRow"
+import MarkdownEditor from "./components/MarkdownEditor"
 
 
 
@@ -14,7 +15,9 @@ function App(): React.JSX.Element {
       <ActionButtonRow className="flex justify-between mt-1"/>
       <NotePreviewList className="mt-3 space-y-1"/>
       </Sidebar>
-      <Content className="glass bg-black/90 border-l backdrop-blur-3xl border-l-white/20">Content</Content>
+      <Content className="glass bg-black/90 border-l backdrop-blur-3xl border-l-white/20">
+      <MarkdownEditor/>
+      </Content>
     </RootLayout>
     </>
   )

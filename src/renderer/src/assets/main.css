@@ -31,3 +31,15 @@ header {
 button {
     -webkit-app-region: no-drag;
 }
+
+::-webkit-scrollbar {
+    @apply w-2 
+}
+
+::-webkit-scrollbar-thumb {
+    @apply bg-zinc-600/50 rounded-md;
+}
+
+::-webkit-scrollbar-track{
+    @apply bg-transparent
+}
