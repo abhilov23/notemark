@@ -24,7 +24,7 @@ export const NotePreviewList = ({ className, ...props }: ComponentProps<"ul">) =
         <NotePreview
           key={note.title + note.lastEditTime}
           isActive={selectedNoteIndex === index}
-          onClick={() => handleNotesSelect(index)}
+          onClick={handleNotesSelect(index)}
           {...note}
         />
       ))}
