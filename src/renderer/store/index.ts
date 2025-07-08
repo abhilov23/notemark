@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable prettier/prettier */
-import { NoteInfo } from './../../shared/models';
+import { NoteContent, NoteInfo } from './../../shared/models';
 import { atom } from "jotai";
 import {unwrap} from "jotai/utils"
 
@@ -22,18 +22,58 @@ export const notesAtom = unwrap(notesAtomAsync, (prev)=> prev)
 
 export const SelectedNoteIndexAtom = atom<number | null>(null)
 
-export const selectedNoteAtom = atom((get) =>{
+ const selectedNoteAtomAsync = atom(async (get) =>{
    const notes=get(notesAtom)
    const selectedNoteIndex = get(SelectedNoteIndexAtom);
+
+
+
    if(selectedNoteIndex === null || !notes) return null
    
    const selectedNote = notes[selectedNoteIndex]
+
+   const noteContent = await window.context.readNote(selectedNote.title)
    
    return {
     ...selectedNote,
-    content: `Hello from Note${selectedNoteIndex}`
+    content: noteContent
    }
 })
+
+
+export const selectedNoteAtom = unwrap(selectedNoteAtomAsync, (prev) => prev ?? {
+  title: '',
+  content: '',
+  lastEditTime: Date.now()
+})
+
+
+export const saveNoteAtom = atom(null, async (get, set, newContent:NoteContent) => {
+     
+  const notes = get(notesAtom);
+  const selectedNote = get(selectedNoteAtom);
+   
+  if(!selectedNote || !notes) return
+
+  //save on disk
+  await window.context.writeNote(selectedNote.title, newContent)
+
+  //update the saved note's last edit time
+  set(notesAtom, notes.map((note) =>{ 
+
+    if(note.title === selectedNote.title){
+      return {
+        ...note,
+        lastEditTime: Date.now()
+      }
+    }  
+
+    return note
+  }))
+})
+
+
+
 
 
 export const createEmptyNoteAtom = atom(null, (get, set) => {

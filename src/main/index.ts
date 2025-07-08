@@ -4,8 +4,8 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import { getNotes } from './lib'
-import { GetNotes } from 'src/shared/types'
+import { getNotes, readNote, writeNote } from './lib'
+import { GetNotes, ReadNote, WriteNote } from 'src/shared/types'
 
 
 function createWindow(): void {
@@ -54,7 +54,13 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  ipcMain.on('getNotes', (_, ...args: Parameters<GetNotes>)=> getNotes(...args))
+  ipcMain.handle('getNotes', (_, ...args: Parameters<GetNotes>)=> getNotes(...args))
+  
+  ipcMain.handle('readNote', (_, ...args: Parameters<ReadNote>)=> readNote(...args))
+  
+  ipcMain.handle('writeNote', (_, ...args: Parameters<WriteNote>)=> writeNote(...args))
+
+
 
 
   createWindow()
