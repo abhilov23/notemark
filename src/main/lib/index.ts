@@ -2,10 +2,10 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { ensureDir } from "fs-extra"
 import { homedir } from "os"
-import { appDirectoryName, fileEncoding } from "src/shared/constants"
-import { NoteInfo } from "src/shared/models"
+import { appDirectoryName, fileEncoding } from "../../shared/constants"
+import { NoteInfo } from "../../shared/models"
 import { readdir, stat } from "fs/promises"
-import { GetNotes } from "src/shared/types"
+import { GetNotes } from "../../shared/types"
 
 
 
