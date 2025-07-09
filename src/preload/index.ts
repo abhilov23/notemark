@@ -1,8 +1,8 @@
 /* eslint-disable prettier/prettier */
 
 import { contextBridge, ipcRenderer } from 'electron'
-import { writeNote } from 'src/main/lib'
-import { GetNotes, ReadNote, WriteNote } from 'src/shared/types'
+import { createNote, writeNote } from 'src/main/lib'
+import { CreateNote, GetNotes, ReadNote, WriteNote } from 'src/shared/types'
 
 
 if(!process.contextIsolated){
@@ -16,7 +16,9 @@ try {
 
     readNote: (...args: Parameters<ReadNote>) =>  ipcRenderer.invoke('readNote', ...args),
     
-    writeNote: (...args: Parameters<WriteNote>) => ipcRenderer.invoke('writeNote', ...args)
+    writeNote: (...args: Parameters<WriteNote>) => ipcRenderer.invoke('writeNote', ...args),
+
+    createNote: (...args: Parameters<CreateNote>) => ipcRenderer.invoke('createNote', ...args),
 
   })
 } catch (error) {
