@@ -7,8 +7,10 @@ import icon from '../../resources/icon.png?asset'
 import { getNotes, readNote, writeNote, createNote, deleteNote } from './lib'
 import { CreateNote, GetNotes, ReadNote, WriteNote, DeleteNote } from 'src/shared/types'
 
+let mainWindow: BrowserWindow | null = null
+
 function createWindow(): void {
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
     show: false,
@@ -30,7 +32,16 @@ function createWindow(): void {
   })
   
   mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
+    mainWindow?.show()
+  })
+
+  // Window control event handlers
+  mainWindow.on('maximize', () => {
+    mainWindow?.webContents.send('window-maximized')
+  })
+
+  mainWindow.on('unmaximize', () => {
+    mainWindow?.webContents.send('window-unmaximized')
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -52,11 +63,33 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
+  // Note-related IPC handlers
   ipcMain.handle('getNotes', (_, ...args: Parameters<GetNotes>)=> getNotes(...args))
   ipcMain.handle('readNote', (_, ...args: Parameters<ReadNote>)=> readNote(...args))
   ipcMain.handle('writeNote', (_, ...args: Parameters<WriteNote>)=> writeNote(...args))
   ipcMain.handle('createNote', (_, ...args: Parameters<CreateNote>)=> createNote(...args))
-  ipcMain.handle('deleteNote', (_, ...args: Parameters<DeleteNote>)=> deleteNote(...args))  // Add this line
+  ipcMain.handle('deleteNote', (_, ...args: Parameters<DeleteNote>)=> deleteNote(...args))
+
+  // Window control IPC handlers
+  ipcMain.handle('window-minimize', () => {
+    mainWindow?.minimize()
+  })
+
+  ipcMain.handle('window-maximize', () => {
+    mainWindow?.maximize()
+  })
+
+  ipcMain.handle('window-restore', () => {
+    mainWindow?.restore()
+  })
+
+  ipcMain.handle('window-close', () => {
+    mainWindow?.close()
+  })
+
+  ipcMain.handle('window-is-maximized', () => {
+    return mainWindow?.isMaximized() || false
+  })
 
   createWindow()
 
