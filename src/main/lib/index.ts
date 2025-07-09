@@ -4,14 +4,10 @@ import { ensureDir } from "fs-extra"
 import { homedir } from "os"
 import { appDirectoryName, fileEncoding } from "../../shared/constants"
 import { NoteInfo } from "../../shared/models"
-import { readdir, stat, readFile, writeFile } from "fs/promises"
-import { GetNotes, ReadNote, WriteNote } from "../../shared/types"
+import { readdir, stat, readFile, writeFile, unlink } from "fs/promises"
+import { GetNotes, ReadNote, WriteNote, DeleteNote } from "../../shared/types"
 import { dialog } from "electron"
 import path from "path"
-import { Console } from "console"
-
-
-
 
 export const getRootDir = ()=>{
     return `${homedir()}/${appDirectoryName}`
@@ -19,7 +15,6 @@ export const getRootDir = ()=>{
 
 export const getNotes: GetNotes = async ()=>{
     const rootDir = getRootDir()
-
     await ensureDir(rootDir)
 
     const notesFileNames = await readdir(rootDir, {
@@ -29,35 +24,35 @@ export const getNotes: GetNotes = async ()=>{
    
     const notes = notesFileNames.filter((fileName) => fileName.endsWith('.md'))
 
-
-    return Promise.all(notes.map(getNotesInfoFromFileName)) 
+    return Promise.all(notes.map(fileName => getNotesInfoFromFileName(fileName, rootDir))) 
 }
 
-export const getNotesInfoFromFileName = async (fileName: string): Promise<NoteInfo> => {
-   
-    const fileStats = await stat(`${getRootDir()}/${fileName}`)
+export const getNotesInfoFromFileName = async (fileName: string, directory: string): Promise<NoteInfo> => {
+    const fullPath = path.join(directory, fileName)
+    const fileStats = await stat(fullPath)
 
     return {
         title: fileName.replace('.md', ''),
-        lastEditTime: fileStats.mtime.getTime()
+        lastEditTime: fileStats.mtime.getTime(),
+        fullPath: fullPath  // Store the full path
     }
 }
 
-export const readNote: ReadNote = async(filename)=>{
-    const rootDir = getRootDir()
-    return readFile(`${rootDir}/${filename}.md`, {encoding: fileEncoding})
+export const readNote: ReadNote = async(fullPath: string)=>{
+    return readFile(fullPath, {encoding: fileEncoding})
 }
 
-
-export const writeNote : WriteNote = async (filename, content)=>{
-  const rootDir = getRootDir()
-
-  console.info(`Writing note ${filename}`)
-  return writeFile(`${rootDir}/${filename}.md`, content, {
-    encoding: fileEncoding
-  })
+export const writeNote: WriteNote = async (fullPath: string, content: string)=>{
+    console.info(`Writing note ${fullPath}`)
+    return writeFile(fullPath, content, {
+        encoding: fileEncoding
+    })
 }
 
+export const deleteNote: DeleteNote = async (fullPath: string) => {
+    console.info(`Deleting note ${fullPath}`)
+    return unlink(fullPath)
+}
 
 export const createNote = async () => {
     const rootDir = getRootDir()
@@ -75,17 +70,12 @@ export const createNote = async () => {
     })
 
     if(canceled || !filePath) {
-    console.info('Note creation cancelled')
-    return false
-    }
-    const {name: filename, dir: parentDir} = path.parse(filePath)
-    
-    if(parentDir !== rootDir) {
         console.info('Note creation cancelled')
         return false
     }
-    console.info(`Creating note ${filePath}`)
-    await writeNote(filename, '')
     
-    return filename
+    console.info(`Creating note ${filePath}`)
+    await writeNote(filePath, '')
+    
+    return filePath  // Return full path instead of just filename
 }
