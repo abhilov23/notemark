@@ -93,9 +93,28 @@ export const writeNote: WriteNote = async (fullPath: string, content: string) =>
     try {
         console.info(`Writing note ${fullPath}`)
         
-        // Ensure the directory exists
+        // Get the directory path
         const dir = path.dirname(fullPath)
-        await ensureDir(dir)
+        console.log('Directory path:', dir)
+        
+        // Only try to create directory if it's not a root directory
+        // Check if it's a root directory (like C:\ or D:\)
+        const parsedPath = path.parse(dir)
+        const isRootDir = parsedPath.root === dir
+        
+        if (!isRootDir) {
+            // Ensure the directory exists (but not for root directories)
+            await ensureDir(dir)
+        } else {
+            console.log('Skipping directory creation for root directory:', dir)
+            // For root directories, just check if they exist
+            try {
+                await stat(dir)
+            } catch (error) {
+                console.error('Root directory does not exist:', dir)
+                throw new Error(`Cannot write to ${dir} - drive not accessible`)
+            }
+        }
         
         await writeFile(fullPath, content, {
             encoding: fileEncoding
@@ -131,9 +150,13 @@ export const createNote = async () => {
     const rootDir = getRootDir()
     await ensureDir(rootDir)
     
+    // Generate a unique filename
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+    const defaultFileName = `note-${timestamp}.md`
+    
     const { filePath, canceled } = await dialog.showSaveDialog({
         title: 'New note',
-        defaultPath: `${rootDir}/untitled.md`,
+        defaultPath: path.join(rootDir, defaultFileName),
         buttonLabel: 'Create',
         properties: ['showOverwriteConfirmation'],
         showsTagField: false,
@@ -150,7 +173,17 @@ export const createNote = async () => {
     console.info(`Creating note ${filePath}`)
     
     try {
+        // Write the file first
         await writeNote(filePath, '')
+        
+        // Verify the file was actually created by checking if it exists
+        const fileStats = await stat(filePath)
+        if (!fileStats.isFile()) {
+            console.error('File was not created successfully')
+            return false
+        }
+        
+        console.log('Note created successfully:', filePath)
         return filePath
     } catch (error) {
         console.error('Error creating note:', error)

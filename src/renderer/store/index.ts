@@ -113,6 +113,27 @@ export const createEmptyNoteAtom = atom(null, async (get, set) => {
     set(SelectedNoteIndexAtom, 0);
     
     console.log('Created new note:', fullPath)
+    
+    // Force a refresh of the notes list to ensure the file is visible
+    // This is important because the file system operation might take a moment
+    setTimeout(async () => {
+      try {
+        const refreshedNotes = await window.context.getNotes()
+        const sortedNotes = refreshedNotes.sort((a, b) => b.lastEditTime - a.lastEditTime)
+        set(notesAtom, sortedNotes)
+        
+        // Find the index of the newly created note
+        const newNoteIndex = sortedNotes.findIndex(note => note.fullPath === fullPath)
+        if (newNoteIndex !== -1) {
+          set(SelectedNoteIndexAtom, newNoteIndex)
+        }
+        
+        console.log('Notes list refreshed after creation')
+      } catch (error) {
+        console.error('Error refreshing notes after creation:', error)
+      }
+    }, 100) // Small delay to ensure file system operation completes
+    
   } catch (error) {
     console.error('Error creating note:', error)
   }
