@@ -1,5 +1,5 @@
-import { createNote } from './../main/lib/index';
-import { CreateNote, GetNotes, ReadNote, WriteNote } from "@shared/types"
+
+import { CreateNote, DeleteNote, GetNotes, ReadNote, WriteNote } from "@shared/types"
 declare global {
   interface Window {
    // electron: ElectronAPI
@@ -8,7 +8,8 @@ declare global {
       getNotes: GetNotes,
       readNote: ReadNote,
       writeNote: WriteNote,
-      createNote: CreateNote
+      createNote: CreateNote,
+      deleteNote: DeleteNote
     }
   }
 }

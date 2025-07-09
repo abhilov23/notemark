@@ -2,96 +2,144 @@
 /* eslint-disable prettier/prettier */
 import { NoteContent, NoteInfo } from './../../shared/models';
 import { atom } from "jotai";
-import {unwrap} from "jotai/utils"
-import { deleteNote } from '../../main/lib/index';
-
+import { unwrap } from "jotai/utils"
 
 const loadNotes = async () => {
-  const notes = await window.context.getNotes()
-  //sort them by most recently added
-  return notes.sort((a, b) => b.lastEditTime - a.lastEditTime)
+  try {
+    const notes = await window.context.getNotes()
+    console.log('Loaded notes:', notes)
+    // Sort them by most recently edited
+    return notes.sort((a, b) => b.lastEditTime - a.lastEditTime)
+  } catch (error) {
+    console.error('Error loading notes:', error)
+    return []
+  }
 }
 
 const notesAtomAsync = atom<NoteInfo[] | Promise<NoteInfo[]>>(loadNotes())
 
-export const notesAtom = unwrap(notesAtomAsync, (prev)=> prev)
+export const notesAtom = unwrap(notesAtomAsync, (prev) => prev ?? [])
 
 export const SelectedNoteIndexAtom = atom<number | null>(null)
 
-const selectedNoteAtomAsync = atom(async (get) =>{
-   const notes=get(notesAtom)
+const selectedNoteAtomAsync = atom(async (get) => {
+   const notes = get(notesAtom)
    const selectedNoteIndex = get(SelectedNoteIndexAtom);
 
-   if(selectedNoteIndex === null || !notes) return null
+   if (selectedNoteIndex === null || !notes || notes.length === 0) return null
    
    const selectedNote = notes[selectedNoteIndex]
-
-   // Use fullPath instead of title
-   const noteContent = await window.context.readNote(selectedNote.fullPath)
    
-   return {
-    ...selectedNote,
-    content: noteContent
+   if (!selectedNote) return null
+
+   console.log('Loading content for note:', selectedNote.fullPath)
+   
+   try {
+     const noteContent = await window.context.readNote(selectedNote.fullPath)
+     
+     return {
+       ...selectedNote,
+       content: noteContent
+     }
+   } catch (error) {
+     console.error('Error loading note content:', error)
+     return {
+       ...selectedNote,
+       content: ''
+     }
    }
 })
 
-export const selectedNoteAtom = unwrap(selectedNoteAtomAsync, (prev) => prev ?? {
-  title: '',
-  content: '',
-  lastEditTime: Date.now(),
-  fullPath: ''
-})
-export const saveNoteAtom = atom(null, async (get, set, newContent:NoteContent) => {
+export const selectedNoteAtom = unwrap(selectedNoteAtomAsync, (prev) => prev ?? null)
+
+export const saveNoteAtom = atom(null, async (get, set, newContent: NoteContent) => {
   const notes = get(notesAtom);
   const selectedNote = get(selectedNoteAtom);
    
-  if(!selectedNote || !notes) return
-  // Use fullPath for saving
-  await window.context.writeNote(selectedNote.fullPath, newContent)
-  //update the saved note's last edit time
-  set(notesAtom, notes.map((note) =>{ 
-    if(note.fullPath === selectedNote.fullPath){
-      return {
-        ...note,
-        lastEditTime: Date.now()
-      }
-    }  
-    return note
-  }))
+  if (!selectedNote || !notes) {
+    console.warn('Cannot save: no selected note or notes')
+    return
+  }
+  
+  try {
+    console.log('Saving note:', selectedNote.fullPath)
+    await window.context.writeNote(selectedNote.fullPath, newContent)
+    
+    // Update the saved note's last edit time
+    const updatedNotes = notes.map((note) => { 
+      if (note.fullPath === selectedNote.fullPath) {
+        return {
+          ...note,
+          lastEditTime: Date.now()
+        }
+      }  
+      return note
+    })
+    
+    // Re-sort by last edit time
+    updatedNotes.sort((a, b) => b.lastEditTime - a.lastEditTime)
+    
+    set(notesAtom, updatedNotes)
+    
+    console.log('Note saved successfully')
+  } catch (error) {
+    console.error('Error saving note:', error)
+  }
 })
 
-export const createEmptyNoteAtom = atom(null, async(get, set) => {
+export const createEmptyNoteAtom = atom(null, async (get, set) => {
   const notes = get(notesAtom);
 
   if (!notes) return 
 
-  const fullPath = await window.context.createNote()
-  
-  if(!fullPath) return
+  try {
+    const fullPath = await window.context.createNote()
+    
+    if (!fullPath) return
 
-  // Extract filename from full path for display
-  const fileName = fullPath.split('/').pop()?.replace('.md', '') || 'untitled'
+    // Extract filename from full path for display
+    const fileName = fullPath.split('/').pop()?.replace('.md', '') || 'untitled'
 
-  const newNote: NoteInfo = { 
-    title: fileName, 
-    lastEditTime: Date.now(),
-    fullPath: fullPath
-  };
+    const newNote: NoteInfo = { 
+      title: fileName, 
+      lastEditTime: Date.now(),
+      fullPath: fullPath
+    };
 
-  set(notesAtom, [newNote, ...notes.filter((note) => note.fullPath !== newNote.fullPath)]);
-  set(SelectedNoteIndexAtom, 0);
+    // Add new note to the beginning and remove any duplicates
+    const updatedNotes = [newNote, ...notes.filter((note) => note.fullPath !== newNote.fullPath)]
+    
+    set(notesAtom, updatedNotes);
+    set(SelectedNoteIndexAtom, 0);
+    
+    console.log('Created new note:', fullPath)
+  } catch (error) {
+    console.error('Error creating note:', error)
+  }
 })
 
-export const deleteNoteAtom = atom(null, async (get, set)=>{
+export const deleteNoteAtom = atom(null, async (get, set) => {
   const notes = get(notesAtom)
   const selectedNote = get(selectedNoteAtom)
 
-  if(!selectedNote || !notes) return 
+  if (!selectedNote || !notes) {
+    console.warn('Cannot delete: no selected note or notes')
+    return 
+  }
 
-  // Actually delete the file from disk
-  await window.context.deleteNote(selectedNote.fullPath)
+  try {
+    console.log('Deleting note:', selectedNote.fullPath)
+    
+    // Actually delete the file from disk
+    await window.context.deleteNote(selectedNote.fullPath)
 
-  // Remove from UI state
-  set(notesAtom, notes.filter((note) => note.fullPath !== selectedNote.fullPath))
-  set(SelectedNoteIndexAtom, null)
+    // Remove from UI state
+    const updatedNotes = notes.filter((note) => note.fullPath !== selectedNote.fullPath)
+    set(notesAtom, updatedNotes)
+    set(SelectedNoteIndexAtom, null)
+    
+    console.log('Note deleted successfully')
+  } catch (error) {
+    console.error('Error deleting note:', error)
+  }
 })

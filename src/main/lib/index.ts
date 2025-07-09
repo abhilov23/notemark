@@ -9,49 +9,53 @@ import { GetNotes, ReadNote, WriteNote, DeleteNote } from "../../shared/types"
 import { dialog } from "electron"
 import path from "path"
 
-export const getRootDir = ()=>{
+export const getRootDir = () => {
     return `${homedir()}/${appDirectoryName}`
 }
 
-export const getNotes: GetNotes = async ()=>{
+export const getNotes: GetNotes = async () => {
     const rootDir = getRootDir()
     await ensureDir(rootDir)
 
     try {
-        const notesFileNames = await readdir(rootDir, {
+        const dirEntries = await readdir(rootDir, {
             encoding: fileEncoding,
-            withFileTypes: false
+            withFileTypes: true
         })
        
-        const notes = notesFileNames.filter((fileName) => fileName.endsWith('.md'))
-        
-        console.log('Found notes:', notes) // Debug log
-        
-        const noteInfos = await Promise.all(
-            notes.map(fileName => getNotesInfoFromFileName(fileName, rootDir))
+        // Filter only .md files that are actually files, not directories
+        const noteFiles = dirEntries.filter(entry => 
+            entry.isFile() && entry.name.endsWith('.md')
         )
         
-        console.log('Processed note infos:', noteInfos) // Debug log
+        console.log('Found note files:', noteFiles.map(f => f.name))
         
-        return noteInfos
+        const noteInfos = await Promise.all(
+            noteFiles.map(file => getNotesInfoFromFileName(file.name, rootDir))
+        )
+        
+        console.log('Processed note infos:', noteInfos)
+        
+        return noteInfos.filter(note => note !== null) // Remove any failed reads
     } catch (error) {
         console.error('Error reading notes:', error)
         return []
     }
 }
 
-export const getNotesInfoFromFileName = async (fileName: string, directory: string): Promise<NoteInfo> => {
+export const getNotesInfoFromFileName = async (fileName: string, directory: string): Promise<NoteInfo | null> => {
     const fullPath = path.join(directory, fileName)
     
     try {
         const fileStats = await stat(fullPath)
         
-        // Make sure it's actually a file, not a directory
+        // Double-check it's a file
         if (!fileStats.isFile()) {
-            throw new Error(`${fullPath} is not a file`)
+            console.warn(`${fullPath} is not a file, skipping`)
+            return null
         }
 
-        // Extract just the base filename without path and extension
+        // Extract filename without extension for title
         const baseFileName = path.basename(fileName, '.md')
 
         return {
@@ -61,51 +65,73 @@ export const getNotesInfoFromFileName = async (fileName: string, directory: stri
         }
     } catch (error) {
         console.error(`Error processing file ${fullPath}:`, error)
-        throw error
+        return null
     }
 }
 
-
-
-
-
-
-
-
-
-
-export const readNote: ReadNote = async(fullPath: string)=>{
+export const readNote: ReadNote = async (fullPath: string) => {
     try {
-        console.log('Reading note from:', fullPath) // Debug log
-        const content = await readFile(fullPath, {encoding: fileEncoding})
-        console.log('Successfully read note content, length:', content.length) // Debug log
+        console.log('Reading note from:', fullPath)
+        
+        // Verify file exists and is readable
+        const fileStats = await stat(fullPath)
+        if (!fileStats.isFile()) {
+            console.error('Not a file:', fullPath)
+            return ''
+        }
+        
+        const content = await readFile(fullPath, { encoding: fileEncoding })
+        console.log('Successfully read note content, length:', content.length)
         return content
     } catch (error) {
         console.error('Error reading note:', fullPath, error)
-        // Return empty string if file can't be read
         return ''
     }
 }
 
-
-
-export const writeNote: WriteNote = async (fullPath: string, content: string)=>{
-    console.info(`Writing note ${fullPath}`)
-    return writeFile(fullPath, content, {
-        encoding: fileEncoding
-    })
+export const writeNote: WriteNote = async (fullPath: string, content: string) => {
+    try {
+        console.info(`Writing note ${fullPath}`)
+        
+        // Ensure the directory exists
+        const dir = path.dirname(fullPath)
+        await ensureDir(dir)
+        
+        await writeFile(fullPath, content, {
+            encoding: fileEncoding
+        })
+        
+        console.log('Successfully wrote note:', fullPath)
+    } catch (error) {
+        console.error('Error writing note:', fullPath, error)
+        throw error
+    }
 }
 
 export const deleteNote: DeleteNote = async (fullPath: string) => {
-    console.info(`Deleting note ${fullPath}`)
-    return unlink(fullPath)
+    try {
+        console.info(`Deleting note ${fullPath}`)
+        
+        // Verify file exists before trying to delete
+        const fileStats = await stat(fullPath)
+        if (!fileStats.isFile()) {
+            console.error('Cannot delete: not a file', fullPath)
+            return
+        }
+        
+        await unlink(fullPath)
+        console.log('Successfully deleted note:', fullPath)
+    } catch (error) {
+        console.error('Error deleting note:', fullPath, error)
+        throw error
+    }
 }
 
 export const createNote = async () => {
     const rootDir = getRootDir()
     await ensureDir(rootDir)
     
-    const {filePath, canceled} =  await dialog.showSaveDialog({
+    const { filePath, canceled } = await dialog.showSaveDialog({
         title: 'New note',
         defaultPath: `${rootDir}/untitled.md`,
         buttonLabel: 'Create',
@@ -116,13 +142,18 @@ export const createNote = async () => {
         ]
     })
 
-    if(canceled || !filePath) {
+    if (canceled || !filePath) {
         console.info('Note creation cancelled')
         return false
     }
     
     console.info(`Creating note ${filePath}`)
-    await writeNote(filePath, '')
     
-    return filePath  // Return full path instead of just filename
+    try {
+        await writeNote(filePath, '')
+        return filePath
+    } catch (error) {
+        console.error('Error creating note:', error)
+        return false
+    }
 }
