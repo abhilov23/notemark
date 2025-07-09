@@ -17,30 +17,77 @@ export const getNotes: GetNotes = async ()=>{
     const rootDir = getRootDir()
     await ensureDir(rootDir)
 
-    const notesFileNames = await readdir(rootDir, {
-        encoding: fileEncoding,
-        withFileTypes: false
-    })
-   
-    const notes = notesFileNames.filter((fileName) => fileName.endsWith('.md'))
-
-    return Promise.all(notes.map(fileName => getNotesInfoFromFileName(fileName, rootDir))) 
+    try {
+        const notesFileNames = await readdir(rootDir, {
+            encoding: fileEncoding,
+            withFileTypes: false
+        })
+       
+        const notes = notesFileNames.filter((fileName) => fileName.endsWith('.md'))
+        
+        console.log('Found notes:', notes) // Debug log
+        
+        const noteInfos = await Promise.all(
+            notes.map(fileName => getNotesInfoFromFileName(fileName, rootDir))
+        )
+        
+        console.log('Processed note infos:', noteInfos) // Debug log
+        
+        return noteInfos
+    } catch (error) {
+        console.error('Error reading notes:', error)
+        return []
+    }
 }
 
 export const getNotesInfoFromFileName = async (fileName: string, directory: string): Promise<NoteInfo> => {
     const fullPath = path.join(directory, fileName)
-    const fileStats = await stat(fullPath)
+    
+    try {
+        const fileStats = await stat(fullPath)
+        
+        // Make sure it's actually a file, not a directory
+        if (!fileStats.isFile()) {
+            throw new Error(`${fullPath} is not a file`)
+        }
 
-    return {
-        title: fileName.replace('.md', ''),
-        lastEditTime: fileStats.mtime.getTime(),
-        fullPath: fullPath  // Store the full path
+        // Extract just the base filename without path and extension
+        const baseFileName = path.basename(fileName, '.md')
+
+        return {
+            title: baseFileName,
+            lastEditTime: fileStats.mtime.getTime(),
+            fullPath: fullPath
+        }
+    } catch (error) {
+        console.error(`Error processing file ${fullPath}:`, error)
+        throw error
     }
 }
 
+
+
+
+
+
+
+
+
+
 export const readNote: ReadNote = async(fullPath: string)=>{
-    return readFile(fullPath, {encoding: fileEncoding})
+    try {
+        console.log('Reading note from:', fullPath) // Debug log
+        const content = await readFile(fullPath, {encoding: fileEncoding})
+        console.log('Successfully read note content, length:', content.length) // Debug log
+        return content
+    } catch (error) {
+        console.error('Error reading note:', fullPath, error)
+        // Return empty string if file can't be read
+        return ''
+    }
 }
+
+
 
 export const writeNote: WriteNote = async (fullPath: string, content: string)=>{
     console.info(`Writing note ${fullPath}`)

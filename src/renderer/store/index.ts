@@ -3,6 +3,8 @@
 import { NoteContent, NoteInfo } from './../../shared/models';
 import { atom } from "jotai";
 import {unwrap} from "jotai/utils"
+import { deleteNote } from '../../main/lib/index';
+
 
 const loadNotes = async () => {
   const notes = await window.context.getNotes()
@@ -39,16 +41,13 @@ export const selectedNoteAtom = unwrap(selectedNoteAtomAsync, (prev) => prev ?? 
   lastEditTime: Date.now(),
   fullPath: ''
 })
-
 export const saveNoteAtom = atom(null, async (get, set, newContent:NoteContent) => {
   const notes = get(notesAtom);
   const selectedNote = get(selectedNoteAtom);
    
   if(!selectedNote || !notes) return
-
   // Use fullPath for saving
   await window.context.writeNote(selectedNote.fullPath, newContent)
-
   //update the saved note's last edit time
   set(notesAtom, notes.map((note) =>{ 
     if(note.fullPath === selectedNote.fullPath){
