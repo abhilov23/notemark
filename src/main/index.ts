@@ -3,9 +3,10 @@
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import icon from '../../resources/icon.png?asset'
 import { getNotes, readNote, writeNote, createNote, deleteNote } from './lib'
 import { CreateNote, GetNotes, ReadNote, WriteNote, DeleteNote } from 'src/shared/types'
+
+const icon = '../../resources/icon.png'
 
 let mainWindow: BrowserWindow | null = null
 
